@@ -79,10 +79,13 @@ function PollWidget({
 export function OverlayPoll({ sessionId }: OverlayPollProps) {
   const { polls } = usePolls(sessionId);
 
-  const visiblePoll = useMemo(
-    () => polls.find((p) => p.status === 'open' || p.status === 'closed'),
-    [polls],
-  );
+  const visiblePoll = useMemo(() => {
+    // open を優先、なければ最新の closed を表示
+    const openPoll = polls.find((p) => p.status === 'open');
+    if (openPoll) return openPoll;
+    const closedPolls = polls.filter((p) => p.status === 'closed');
+    return closedPolls.length > 0 ? closedPolls[closedPolls.length - 1] : null;
+  }, [polls]);
 
   if (!visiblePoll) return null;
 

@@ -74,10 +74,10 @@ function PollVoteUI({
 export function ActivePoll({ sessionId, userId }: ActivePollProps) {
   const { polls } = usePolls(sessionId);
 
-  const activePoll = useMemo(
-    () => polls.find((p) => p.status === 'open'),
-    [polls],
-  );
+  const activePoll = useMemo(() => {
+    const openPolls = polls.filter((p) => p.status === 'open');
+    return openPolls.length > 0 ? openPolls[openPolls.length - 1] : null;
+  }, [polls]);
 
   if (!activePoll) return null;
 
