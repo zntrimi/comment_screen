@@ -88,7 +88,7 @@ function ConsentModal({
       <div className="w-full max-w-sm rounded-2xl bg-gray-800 p-6 space-y-4">
         <h2 className="text-lg font-bold text-white text-center">確認</h2>
         <p className="text-sm text-gray-300 text-center">
-          コメントは記録されます。利用規約に同意の上、送信してください。
+          コメントはすべて記録されます。マナーを守って投稿してください。
         </p>
         <div className="flex gap-3">
           <button
@@ -101,7 +101,7 @@ function ConsentModal({
             onClick={onAgree}
             className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-500 transition-colors"
           >
-            同意して送信
+            OK
           </button>
         </div>
       </div>
