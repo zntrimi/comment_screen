@@ -1,0 +1,34 @@
+{
+  "rules": {
+    "comments": {
+      "$sessionId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "polls": {
+      "$sessionId": {
+        ".read": true,
+        "$pollId": {
+          ".write": "auth != null"
+        }
+      }
+    },
+    "poll_votes": {
+      "$sessionId": {
+        "$pollId": {
+          ".read": true,
+          "$userId": {
+            ".write": true
+          }
+        }
+      }
+    },
+    "reactions": {
+      "$sessionId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}

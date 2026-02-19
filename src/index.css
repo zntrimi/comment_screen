@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans',
+    'Noto Sans JP', sans-serif;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes scroll-left {
+  from { transform: translateX(100vw); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes fixed-display {
+  0%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* visibilitychange時にCSS変数で一括制御（JS timerを使わない） */
+.comment-overlay [data-comment-key] {
+  animation-play-state: var(--anim-play-state, running) !important;
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-out-right {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes float-up-wobble {
+  0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  25% { transform: translateY(-25vh) scale(1.1) rotate(-8deg); opacity: 0.9; }
+  50% { transform: translateY(-50vh) scale(1) rotate(6deg); opacity: 0.7; }
+  75% { transform: translateY(-75vh) scale(0.9) rotate(-4deg); opacity: 0.4; }
+  100% { transform: translateY(-100vh) scale(0.8) rotate(0deg); opacity: 0; }
+}
+
+@keyframes results-flash {
+  0% { background-color: rgba(255, 255, 255, 0); }
+  50% { background-color: rgba(255, 255, 255, 0.1); }
+  100% { background-color: rgba(255, 255, 255, 0); }
+}
+
+@keyframes vote-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+}
