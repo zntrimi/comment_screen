@@ -1,3 +1,4 @@
+import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { CommentRenderer } from '../components/overlay/CommentRenderer';
@@ -16,6 +17,8 @@ export function Overlay() {
   const speed = Number(
     searchParams.get('speed') || session?.settings.scrollSpeedSeconds || 8,
   );
+  const showQr = searchParams.get('qr') === '1';
+  const commentUrl = `${window.location.origin}/comment/${sessionId}`;
 
   // OBSブラウザソース対応: html/bodyを透過にする
   useEffect(() => {
@@ -52,6 +55,21 @@ export function Overlay() {
       />
       {sessionId && <OverlayPoll sessionId={sessionId} />}
       {sessionId && <ReactionBubbles sessionId={sessionId} />}
+      {showQr && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            background: 'rgba(255, 255, 255, 0.85)',
+            borderRadius: 8,
+            padding: 8,
+            zIndex: 9999,
+          }}
+        >
+          <QRCodeSVG value={commentUrl} size={96} />
+        </div>
+      )}
     </>
   );
 }

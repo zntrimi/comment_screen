@@ -1,10 +1,6 @@
-import { BarChart3, Eye, EyeOff, Play, Square, Trash2 } from 'lucide-react';
+import { BarChart3, Play, Square, Trash2 } from 'lucide-react';
 import { usePollVotes } from '../../hooks/usePollVotes';
-import {
-  deletePoll,
-  toggleShowResults,
-  updatePollStatus,
-} from '../../services/pollService';
+import { deletePoll, updatePollStatus } from '../../services/pollService';
 import type { Poll } from '../../types';
 import { PollResultsBar } from './PollResultsBar';
 
@@ -56,7 +52,7 @@ export function PollCard({ sessionId, poll, userId }: PollCardProps) {
         options={poll.options}
         voteCounts={voteCounts}
         totalVotes={totalVotes}
-        showResults={poll.showResults || poll.status !== 'draft'}
+        showResults={true}
       />
 
       <div className="flex flex-wrap gap-2 border-t pt-2">
@@ -76,20 +72,6 @@ export function PollCard({ sessionId, poll, userId }: PollCardProps) {
             <Square className="h-3 w-3" /> 締め切る
           </button>
         )}
-        <button
-          onClick={() => toggleShowResults(sessionId, poll.id, !poll.showResults)}
-          className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
-        >
-          {poll.showResults ? (
-            <>
-              <EyeOff className="h-3 w-3" /> 結果を隠す
-            </>
-          ) : (
-            <>
-              <Eye className="h-3 w-3" /> 結果を表示
-            </>
-          )}
-        </button>
         <button
           onClick={handleDelete}
           className="flex items-center gap-1 rounded border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 ml-auto"

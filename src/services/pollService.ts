@@ -24,14 +24,6 @@ export async function updatePollStatus(
   await update(ref(rtdb, `polls/${sessionId}/${pollId}`), { status });
 }
 
-export async function toggleShowResults(
-  sessionId: string,
-  pollId: string,
-  showResults: boolean,
-) {
-  await update(ref(rtdb, `polls/${sessionId}/${pollId}`), { showResults });
-}
-
 export async function deletePoll(sessionId: string, pollId: string) {
   await remove(ref(rtdb, `polls/${sessionId}/${pollId}`));
   await remove(ref(rtdb, `poll_votes/${sessionId}/${pollId}`));
