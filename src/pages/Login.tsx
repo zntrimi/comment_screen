@@ -41,6 +41,7 @@ export function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-md text-center">
+        <img src="/logo.webp" alt="Classroom Adventure" className="mx-auto mb-4 h-16" />
         <h1 className="mb-2 text-2xl font-bold text-gray-900">
           コメントスクリーン
         </h1>

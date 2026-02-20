@@ -29,7 +29,10 @@ export function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <header className="border-b bg-white px-4 py-3">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">コメントスクリーン</h1>
+          <div className="flex items-center gap-2">
+            <img src="/logo.webp" alt="Classroom Adventure" className="h-8" />
+            <h1 className="text-lg font-bold text-gray-900">コメントスクリーン</h1>
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">{user?.displayName}</span>
             <button
