@@ -60,7 +60,7 @@ export function Overlay() {
           style={{
             position: 'fixed',
             bottom: 16,
-            right: 16,
+            left: 16,
             background: 'rgba(255, 255, 255, 0.85)',
             borderRadius: 8,
             padding: 8,

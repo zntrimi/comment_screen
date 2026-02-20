@@ -157,6 +157,15 @@ export function SessionDetail() {
             >
               {overlayUrl}
             </code>
+            <button
+              className="shrink-0 rounded border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-600 hover:bg-gray-50"
+              onClick={() => {
+                navigator.clipboard.writeText(`${overlayUrl}?qr=1`);
+                toast.success('QR付きURLをコピーしました');
+              }}
+            >
+              QR付き
+            </button>
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="text-gray-500 shrink-0">コメントURL:</span>
