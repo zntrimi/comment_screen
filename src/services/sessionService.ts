@@ -1,9 +1,10 @@
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
+  getDoc,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -12,18 +13,36 @@ import { DEFAULT_SESSION_SETTINGS } from '../types';
 
 const sessionsRef = collection(db, 'sessions');
 
+const ID_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+
+function generateSessionId(): string {
+  let id = '';
+  for (let i = 0; i < 4; i++) {
+    id += ID_CHARS[Math.floor(Math.random() * ID_CHARS.length)];
+  }
+  return id;
+}
+
 export async function createSession(
   name: string,
   ownerId: string,
 ): Promise<string> {
-  const docRef = await addDoc(sessionsRef, {
-    name,
-    status: 'active',
-    ownerId,
-    createdAt: serverTimestamp(),
-    settings: DEFAULT_SESSION_SETTINGS,
-  });
-  return docRef.id;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const id = generateSessionId();
+    const docRef = doc(db, 'sessions', id);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) {
+      await setDoc(docRef, {
+        name,
+        status: 'active',
+        ownerId,
+        createdAt: serverTimestamp(),
+        settings: DEFAULT_SESSION_SETTINGS,
+      });
+      return id;
+    }
+  }
+  throw new Error('Failed to generate unique session ID');
 }
 
 export async function updateSessionStatus(
