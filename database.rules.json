@@ -36,6 +36,20 @@
         ".read": true,
         ".write": "auth != null"
       }
+    },
+    "comment_control": {
+      "$sessionId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    "questions": {
+      "$sessionId": {
+        ".read": true,
+        "$questionId": {
+          ".write": "auth != null"
+        }
+      }
     }
   }
 }

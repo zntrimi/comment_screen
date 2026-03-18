@@ -10,7 +10,6 @@ import {
 import { db } from '../config/firebase';
 import type { Session, SessionSettings } from '../types';
 import { DEFAULT_SESSION_SETTINGS } from '../types';
-import { initCommentControl } from './commentControlService';
 
 const sessionsRef = collection(db, 'sessions');
 
@@ -40,7 +39,6 @@ export async function createSession(
         createdAt: serverTimestamp(),
         settings: DEFAULT_SESSION_SETTINGS,
       });
-      await initCommentControl(id);
       return id;
     }
   }

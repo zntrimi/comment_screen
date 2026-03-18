@@ -2,13 +2,6 @@ import { push, ref, remove, serverTimestamp, set, update } from 'firebase/databa
 import { rtdb } from '../config/firebase';
 import type { QuestionStatus } from '../types';
 
-export async function initCommentControl(sessionId: string) {
-  await set(ref(rtdb, `comment_control/${sessionId}`), {
-    commentingEnabled: true,
-    activeQuestion: null,
-  });
-}
-
 export async function setCommentingEnabled(sessionId: string, enabled: boolean) {
   await update(ref(rtdb, `comment_control/${sessionId}`), {
     commentingEnabled: enabled,
