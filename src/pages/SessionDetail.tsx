@@ -4,8 +4,6 @@ import {
   MessageCircle,
   MessageCircleOff,
   Monitor,
-  Pause,
-  Play,
   QrCode,
   Square,
   Trash2,
@@ -71,16 +69,10 @@ export function SessionDetail() {
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
               session.status === 'active'
                 ? 'bg-green-100 text-green-800'
-                : session.status === 'paused'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-gray-100 text-gray-800'
+                : 'bg-gray-100 text-gray-800'
             }`}
           >
-            {session.status === 'active'
-              ? '配信中'
-              : session.status === 'paused'
-                ? '一時停止'
-                : '終了'}
+            {session.status === 'active' ? '配信中' : '終了'}
           </span>
         </div>
       </header>
@@ -90,25 +82,6 @@ export function SessionDetail() {
         <div className="flex flex-wrap gap-2">
           {session.status !== 'ended' && (
             <>
-              <button
-                onClick={() =>
-                  updateSessionStatus(
-                    session.id,
-                    session.status === 'active' ? 'paused' : 'active',
-                  )
-                }
-                className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
-              >
-                {session.status === 'active' ? (
-                  <>
-                    <Pause className="h-4 w-4" /> 一時停止
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4" /> 再開
-                  </>
-                )}
-              </button>
               <button
                 onClick={() => updateSessionStatus(session.id, 'ended')}
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"

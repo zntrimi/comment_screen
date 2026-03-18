@@ -13,7 +13,7 @@ export interface SessionSettings {
 export interface Session {
   id: string;
   name: string;
-  status: 'active' | 'paused' | 'ended';
+  status: 'active' | 'ended';
   ownerId: string;
   createdAt: Timestamp;
   settings: SessionSettings;

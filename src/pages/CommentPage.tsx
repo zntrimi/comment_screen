@@ -256,10 +256,9 @@ export function CommentPage() {
     return <NicknameScreen onComplete={handleNicknameComplete} />;
   }
 
-  const isPaused = session.status === 'paused';
   const isQuestionActive = !!activeQuestion;
-  const commentAllowed = !isPaused && (commentingEnabled || isQuestionActive);
-  const commentStopped = !commentingEnabled && !isQuestionActive && !isPaused;
+  const commentAllowed = isQuestionActive || commentingEnabled;
+  const commentStopped = !commentAllowed && !isBlocked;
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-gray-900">
@@ -273,9 +272,6 @@ export function CommentPage() {
         <h1 className="text-center text-base font-bold text-white">
           {session.name}
         </h1>
-        {isPaused && (
-          <p className="text-center text-xs text-yellow-500 mt-0.5">一時停止中</p>
-        )}
       </header>
 
       {/* ① ブロックバナー（強化版） */}
