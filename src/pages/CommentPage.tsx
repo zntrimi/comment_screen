@@ -185,6 +185,10 @@ export function CommentPage() {
     /* ③ 初回コメント時の同意確認 */
     const agreedKey = getAgreedKey(sessionId);
     if (!sessionStorage.getItem(agreedKey)) {
+      /* キーボードを閉じてからダイアログを表示（モバイルで隠れるのを防止） */
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
       setPendingData(data);
       setShowConsent(true);
       return;
