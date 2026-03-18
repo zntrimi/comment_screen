@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { CommentRenderer } from '../components/overlay/CommentRenderer';
 import { OverlayPoll } from '../components/overlay/OverlayPoll';
+import { OverlayQuestion } from '../components/overlay/OverlayQuestion';
 import { ReactionBubbles } from '../components/overlay/ReactionBubbles';
 import { useComments } from '../hooks/useComments';
 import { useSession } from '../hooks/useSession';
@@ -53,6 +54,7 @@ export function Overlay() {
         backgroundColor={bgColor}
         onNewCommentsProcessed={handleProcessed}
       />
+      {sessionId && <OverlayQuestion sessionId={sessionId} />}
       {sessionId && <OverlayPoll sessionId={sessionId} />}
       {sessionId && <ReactionBubbles sessionId={sessionId} />}
       {showQr && (

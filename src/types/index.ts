@@ -54,6 +54,20 @@ export interface Reaction {
   createdAt: Timestamp;
 }
 
+export type QuestionStatus = 'active' | 'closed';
+
+export interface Question {
+  id: string;
+  text: string;
+  status: QuestionStatus;
+  createdAt: Timestamp;
+}
+
+export interface CommentControl {
+  commentingEnabled: boolean;
+  activeQuestion: { id: string; text: string; status: QuestionStatus; createdAt: number } | null;
+}
+
 export const DEFAULT_SESSION_SETTINGS: SessionSettings = {
   maxCommentLength: 100,
   allowAnonymous: true,

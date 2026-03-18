@@ -8,6 +8,7 @@ interface CommentInputProps {
   settings: SessionSettings;
   canPost: boolean;
   remaining: number;
+  placeholder?: string;
   onSubmit: (data: {
     text: string;
     color: string;
@@ -20,6 +21,7 @@ export function CommentInput({
   settings,
   canPost,
   remaining,
+  placeholder = 'コメントを送ろう！',
   onSubmit,
 }: CommentInputProps) {
   const [text, setText] = useState('');
@@ -54,7 +56,7 @@ export function CommentInput({
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={settings.maxCommentLength}
-          placeholder="コメントを送ろう！"
+          placeholder={placeholder}
           autoFocus
           className="flex-1 rounded-xl bg-gray-800 border border-gray-700 px-4 py-3 text-base text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none"
         />

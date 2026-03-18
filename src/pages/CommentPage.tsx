@@ -1,13 +1,15 @@
-import { MessageCircle, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, MessageCircle, ShieldAlert } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { ActiveQuestion } from '../components/comment/ActiveQuestion';
 import { ActivePoll } from '../components/comment/ActivePoll';
 import { CommentInput } from '../components/comment/CommentInput';
 import { ReactionBar } from '../components/comment/ReactionBar';
 import { RecentComments } from '../components/comment/RecentComments';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useBlockedUsers } from '../hooks/useBlockedUsers';
+import { useCommentControl } from '../hooks/useCommentControl';
 import { useComments } from '../hooks/useComments';
 import { useRateLimit } from '../hooks/useRateLimit';
 import { useSession } from '../hooks/useSession';
@@ -75,7 +77,7 @@ function NicknameScreen({ onComplete }: { onComplete: (name: string) => void }) 
   );
 }
 
-/* ③ 同意確認モーダル */
+/* ③ 同意確認モーダル（強化版） */
 function ConsentModal({
   onAgree,
   onCancel,
@@ -86,10 +88,26 @@ function ConsentModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-sm rounded-2xl bg-gray-800 p-6 space-y-4">
-        <h2 className="text-lg font-bold text-white text-center">確認</h2>
-        <p className="text-sm text-gray-300 text-center">
-          コメントはすべて記録されます。マナーを守って投稿してください。
-        </p>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center">
+            <AlertTriangle className="h-6 w-6 text-red-500" />
+          </div>
+          <h2 className="text-lg font-bold text-white">注意事項</h2>
+        </div>
+        <ul className="space-y-2 text-sm text-gray-300">
+          <li className="flex items-start gap-2">
+            <span className="shrink-0 text-red-400 font-bold">1.</span>
+            <span>コメントはすべて<strong className="text-white">本名と共に記録</strong>されます</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="shrink-0 text-red-400 font-bold">2.</span>
+            <span>不適切なコメントは<strong className="text-white">学校に報告</strong>されます</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="shrink-0 text-red-400 font-bold">3.</span>
+            <span>マナーを守って<strong className="text-white">責任ある投稿</strong>をしてください</span>
+          </li>
+        </ul>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
@@ -101,7 +119,7 @@ function ConsentModal({
             onClick={onAgree}
             className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-500 transition-colors"
           >
-            OK
+            同意して投稿
           </button>
         </div>
       </div>
@@ -114,6 +132,7 @@ export function CommentPage() {
   const { session, loading: sessionLoading } = useSession(sessionId);
   const { comments } = useComments(sessionId);
   const { blockedUserIds } = useBlockedUsers(sessionId);
+  const { commentingEnabled, activeQuestion } = useCommentControl(sessionId);
   const [nickname, setNickname] = useState(
     () => localStorage.getItem(NICKNAME_KEY) || '',
   );
@@ -238,6 +257,9 @@ export function CommentPage() {
   }
 
   const isPaused = session.status === 'paused';
+  const isQuestionActive = !!activeQuestion;
+  const commentAllowed = !isPaused && (commentingEnabled || isQuestionActive);
+  const commentStopped = !commentingEnabled && !isQuestionActive && !isPaused;
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-gray-900">
@@ -256,11 +278,26 @@ export function CommentPage() {
         )}
       </header>
 
-      {/* ① ブロックバナー */}
+      {/* ① ブロックバナー（強化版） */}
       {isBlocked && (
-        <div className="shrink-0 flex items-center justify-center gap-2 bg-red-900/60 px-4 py-2 text-sm text-red-200">
-          <ShieldAlert className="h-4 w-4" />
-          <span>管理者によりコメントが制限されています</span>
+        <div className="shrink-0 flex items-center justify-center gap-2 bg-red-900/80 px-4 py-3 text-sm text-red-100">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-red-300" />
+          <span>不適切なコメントが検出されました。コメントが制限されています。学校に報告される場合があります。</span>
+        </div>
+      )}
+
+      {/* コメント停止中バナー */}
+      {commentStopped && !isBlocked && (
+        <div className="shrink-0 flex items-center justify-center gap-2 bg-yellow-900/50 px-4 py-2 text-sm text-yellow-200">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-400" />
+          <span>コメントは現在停止中です</span>
+        </div>
+      )}
+
+      {/* Active Question */}
+      {isQuestionActive && (
+        <div className="shrink-0 px-4 pt-2">
+          <ActiveQuestion text={activeQuestion.text} />
         </div>
       )}
 
@@ -283,8 +320,9 @@ export function CommentPage() {
         />
         <CommentInput
           settings={session.settings}
-          canPost={canPost && !isPaused && !isSubmitting && !isBlocked}
+          canPost={canPost && commentAllowed && !isSubmitting && !isBlocked}
           remaining={remaining}
+          placeholder={isQuestionActive ? `回答: ${activeQuestion.text}` : undefined}
           onSubmit={handleSubmit}
         />
       </div>

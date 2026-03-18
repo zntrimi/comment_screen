@@ -1,6 +1,8 @@
 import {
   ArrowLeft,
   ExternalLink,
+  MessageCircle,
+  MessageCircleOff,
   Monitor,
   Pause,
   Play,
@@ -16,9 +18,12 @@ import { CommentAnalytics } from '../components/dashboard/CommentAnalytics';
 import { CommentList } from '../components/dashboard/CommentList';
 import { PollManager } from '../components/dashboard/PollManager';
 import { QRCodeModal } from '../components/dashboard/QRCodeModal';
+import { QuestionManager } from '../components/dashboard/QuestionManager';
 import { SessionSettings } from '../components/dashboard/SessionSettings';
+import { useCommentControl } from '../hooks/useCommentControl';
 import { useComments } from '../hooks/useComments';
 import { useSession } from '../hooks/useSession';
+import { setCommentingEnabled } from '../services/commentControlService';
 import { deleteSession, updateSessionStatus } from '../services/sessionService';
 
 export function SessionDetail() {
@@ -26,8 +31,9 @@ export function SessionDetail() {
   const navigate = useNavigate();
   const { session, loading } = useSession(id);
   const { comments } = useComments(id, { limit: 5000 });
+  const { commentingEnabled } = useCommentControl(id);
   const [showQR, setShowQR] = useState(false);
-  const [activeTab, setActiveTab] = useState<'comments' | 'polls' | 'settings'>('comments');
+  const [activeTab, setActiveTab] = useState<'comments' | 'polls' | 'questions' | 'settings'>('comments');
 
   if (loading) return <LoadingSpinner />;
   if (!session) {
@@ -108,6 +114,24 @@ export function SessionDetail() {
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
               >
                 <Square className="h-4 w-4" /> 終了
+              </button>
+              <button
+                onClick={() => setCommentingEnabled(session.id, !commentingEnabled)}
+                className={`flex items-center gap-1 rounded-lg border px-3 py-2 text-sm ${
+                  commentingEnabled
+                    ? 'border-gray-300 hover:bg-gray-50'
+                    : 'border-orange-300 bg-orange-50 text-orange-700'
+                }`}
+              >
+                {commentingEnabled ? (
+                  <>
+                    <MessageCircleOff className="h-4 w-4" /> コメント停止
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="h-4 w-4" /> コメント再開
+                  </>
+                )}
               </button>
             </>
           )}
@@ -206,6 +230,16 @@ export function SessionDetail() {
               投票
             </button>
             <button
+              onClick={() => setActiveTab('questions')}
+              className={`border-b-2 pb-2 text-sm font-medium ${
+                activeTab === 'questions'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              質問
+            </button>
+            <button
               onClick={() => setActiveTab('settings')}
               className={`border-b-2 pb-2 text-sm font-medium ${
                 activeTab === 'settings'
@@ -227,6 +261,8 @@ export function SessionDetail() {
             </>
           ) : activeTab === 'polls' ? (
             <PollManager sessionId={session.id} />
+          ) : activeTab === 'questions' ? (
+            <QuestionManager sessionId={session.id} />
           ) : (
             <SessionSettings sessionId={session.id} settings={session.settings} />
           )}
