@@ -21,7 +21,7 @@ export function CommentList({ sessionId, comments }: CommentListProps) {
   }
 
   return (
-    <div className="space-y-1 max-h-96 overflow-y-auto">
+    <div className="space-y-1 max-h-[600px] overflow-y-auto">
       {comments.map((c) => {
         const isBlocked = blockedUserIds.has(c.userId);
         return (

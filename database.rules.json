@@ -3,7 +3,8 @@
     "comments": {
       "$sessionId": {
         ".read": true,
-        ".write": true
+        ".write": true,
+        ".indexOn": ["createdAt"]
       }
     },
     "polls": {

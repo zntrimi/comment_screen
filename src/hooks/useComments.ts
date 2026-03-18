@@ -28,7 +28,8 @@ function snapshotToComment(key: string, val: Record<string, unknown>): Comment {
   };
 }
 
-export function useComments(sessionId: string | undefined) {
+export function useComments(sessionId: string | undefined, options?: { limit?: number }) {
+  const limit = options?.limit ?? 200;
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComments, setNewComments] = useState<Comment[]>([]);
   const initialLoadDone = useRef(false);
@@ -38,7 +39,7 @@ export function useComments(sessionId: string | undefined) {
 
     initialLoadDone.current = false;
     const commentsRef = ref(rtdb, `comments/${sessionId}`);
-    const recentQuery = query(commentsRef, orderByChild('createdAt'), limitToLast(200));
+    const recentQuery = query(commentsRef, orderByChild('createdAt'), limitToLast(limit));
 
     // 初回ロード: 既存コメント一覧を取得
     const unsubValue = onValue(recentQuery, (snap) => {
@@ -57,7 +58,7 @@ export function useComments(sessionId: string | undefined) {
       const comment = snapshotToComment(snap.key!, snap.val());
       setComments((prev) => {
         if (prev.some((c) => c.id === comment.id)) return prev;
-        return [comment, ...prev].slice(0, 200);
+        return [comment, ...prev].slice(0, limit);
       });
 
       if (initialLoadDone.current) {
@@ -85,7 +86,7 @@ export function useComments(sessionId: string | undefined) {
       unsubChanged();
       unsubRemoved();
     };
-  }, [sessionId]);
+  }, [sessionId, limit]);
 
   const clearNewComments = useCallback(() => setNewComments([]), []);
 

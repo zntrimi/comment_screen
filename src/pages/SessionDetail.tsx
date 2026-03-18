@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { CommentAnalytics } from '../components/dashboard/CommentAnalytics';
 import { CommentList } from '../components/dashboard/CommentList';
 import { PollManager } from '../components/dashboard/PollManager';
 import { QRCodeModal } from '../components/dashboard/QRCodeModal';
@@ -24,7 +25,7 @@ export function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { session, loading } = useSession(id);
-  const { comments } = useComments(id);
+  const { comments } = useComments(id, { limit: 5000 });
   const [showQR, setShowQR] = useState(false);
   const [activeTab, setActiveTab] = useState<'comments' | 'polls' | 'settings'>('comments');
 
@@ -220,7 +221,10 @@ export function SessionDetail() {
         {/* Tab content */}
         <div className="rounded-lg border bg-white p-4">
           {activeTab === 'comments' ? (
-            <CommentList sessionId={session.id} comments={comments} />
+            <>
+              <CommentAnalytics comments={comments} />
+              <CommentList sessionId={session.id} comments={comments} />
+            </>
           ) : activeTab === 'polls' ? (
             <PollManager sessionId={session.id} />
           ) : (
