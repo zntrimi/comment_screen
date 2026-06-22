@@ -17,6 +17,10 @@ export const FONT_SIZE_MAP = {
 
 export const LANE_HEIGHT = 72;
 
+// オーバーレイの基準解像度（高さ）。フォントサイズ・レーン位置はこの高さを前提に
+// 定義しており、実際の表示高さとの比率でスケールさせて解像度非依存にする。
+export const REFERENCE_HEIGHT = 1080;
+
 export const POLL_OPTION_COLORS = [
   '#3B82F6', // blue
   '#F59E0B', // amber

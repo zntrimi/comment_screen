@@ -10,7 +10,7 @@ export function PinnedComment({ comment }: PinnedCommentProps) {
       className="rounded bg-black/70 px-4 py-2 text-center"
       style={{
         color: comment.color,
-        fontSize: '20px',
+        fontSize: 'calc(20px * var(--overlay-scale, 1))',
         fontWeight: 'bold',
       }}
     >

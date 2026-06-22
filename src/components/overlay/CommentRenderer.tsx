@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Comment } from '../../types';
+import { REFERENCE_HEIGHT } from '../../utils/constants';
 import { LaneManager } from '../../utils/laneManager';
 import { FixedComment } from './FixedComment';
 import { PinnedComment } from './PinnedComment';
@@ -27,7 +28,7 @@ export function CommentRenderer({
   onNewCommentsProcessed,
 }: CommentRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const laneManagerRef = useRef<LaneManager>(new LaneManager(720));
+  const laneManagerRef = useRef<LaneManager>(new LaneManager(REFERENCE_HEIGHT));
   const [scrollingComments, setScrollingComments] = useState<ActiveComment[]>([]);
   const [topComments, setTopComments] = useState<ActiveComment[]>([]);
   const [bottomComments, setBottomComments] = useState<ActiveComment[]>([]);
@@ -55,13 +56,18 @@ export function CommentRenderer({
     return () => document.removeEventListener('visibilitychange', handler);
   }, []);
 
-  // コンテナのリサイズを監視
+  // コンテナの高さに応じて --overlay-scale を更新し、フォント・レーン位置を
+  // 基準解像度(1080p)からの比率でスケールさせる（低解像度で文字が巨大化するのを防ぐ）
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    const applyScale = (height: number) => {
+      el.style.setProperty('--overlay-scale', String(height / REFERENCE_HEIGHT));
+    };
+    applyScale(el.clientHeight);
     const obs = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        laneManagerRef.current.updateScreenHeight(entry.contentRect.height);
+        applyScale(entry.contentRect.height);
       }
     });
     obs.observe(el);

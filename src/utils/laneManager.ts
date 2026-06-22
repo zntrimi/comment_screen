@@ -36,15 +36,6 @@ export class LaneManager {
     return lane * LANE_HEIGHT;
   }
 
-  updateScreenHeight(screenHeight: number): void {
-    this.laneCount = Math.floor(screenHeight / LANE_HEIGHT);
-    const newLanes = new Array(this.laneCount).fill(0);
-    for (let i = 0; i < Math.min(this.lanes.length, this.laneCount); i++) {
-      newLanes[i] = this.lanes[i] ?? 0;
-    }
-    this.lanes = newLanes;
-  }
-
   reset(): void {
     this.lanes.fill(0);
   }

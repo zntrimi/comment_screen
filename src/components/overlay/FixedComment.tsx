@@ -17,7 +17,7 @@ export function FixedComment({ comment, duration, dataKey }: FixedCommentProps) 
       data-comment-type={comment.position}
       style={{
         color: comment.color,
-        fontSize: `${fontSize}px`,
+        fontSize: `calc(${fontSize}px * var(--overlay-scale, 1))`,
         fontWeight: 'bold',
         textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
         animation: `fixed-display ${duration}s linear forwards`,
