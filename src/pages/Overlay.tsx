@@ -1,5 +1,5 @@
 import { QRCodeSVG } from 'qrcode.react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { CommentRenderer } from '../components/overlay/CommentRenderer';
 import { OverlayPoll } from '../components/overlay/OverlayPoll';
@@ -20,6 +20,13 @@ export function Overlay() {
   );
   const showQr = searchParams.get('qr') === '1';
   const commentUrl = `${window.location.origin}/comment/${sessionId}`;
+  const [qrEnlarged, setQrEnlarged] = useState(false);
+
+  // 拡大時のQRサイズ（画面の短辺の60%）。オーバーレイは全画面なので一度計算すれば十分。
+  const qrLargeSize = useMemo(
+    () => Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.6),
+    [],
+  );
 
   // OBSブラウザソース対応: html/bodyを透過にする
   useEffect(() => {
@@ -59,17 +66,50 @@ export function Overlay() {
       {sessionId && <ReactionBubbles sessionId={sessionId} />}
       {showQr && (
         <div
-          style={{
-            position: 'fixed',
-            bottom: 16,
-            left: 16,
-            background: 'rgba(255, 255, 255, 0.85)',
-            borderRadius: 8,
-            padding: 8,
-            zIndex: 9999,
-          }}
+          onClick={() => setQrEnlarged((v) => !v)}
+          style={
+            qrEnlarged
+              ? {
+                  position: 'fixed',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 24,
+                  background: 'rgba(0, 0, 0, 0.72)',
+                  cursor: 'zoom-out',
+                  zIndex: 10000,
+                }
+              : {
+                  position: 'fixed',
+                  bottom: 16,
+                  left: 16,
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderRadius: 12,
+                  padding: 12,
+                  cursor: 'zoom-in',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+                  zIndex: 9999,
+                }
+          }
         >
-          <QRCodeSVG value={commentUrl} size={96} />
+          <div style={{ background: '#fff', borderRadius: 12, padding: qrEnlarged ? 24 : 0 }}>
+            <QRCodeSVG value={commentUrl} size={qrEnlarged ? qrLargeSize : 150} />
+          </div>
+          {qrEnlarged && (
+            <div
+              style={{
+                color: '#fff',
+                fontSize: 28,
+                fontWeight: 700,
+                letterSpacing: 0.5,
+                textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)',
+              }}
+            >
+              {commentUrl}
+            </div>
+          )}
         </div>
       )}
     </>
