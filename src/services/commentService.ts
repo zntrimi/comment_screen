@@ -1,6 +1,6 @@
 import { push, ref, remove, serverTimestamp, update } from 'firebase/database';
 import { rtdb } from '../config/firebase';
-import type { CommentFontSize, CommentPosition } from '../types';
+import type { Comment, CommentFontSize, CommentPosition } from '../types';
 
 export async function postComment(
   sessionId: string,
@@ -24,6 +24,26 @@ export async function postComment(
 
 export async function deleteComment(sessionId: string, commentId: string) {
   await remove(ref(rtdb, `comments/${sessionId}/${commentId}`));
+}
+
+/** 削除の取り消し（undo）用。元の内容・投稿時刻を保って再登録する */
+export async function restoreComment(sessionId: string, comment: Comment) {
+  const commentsRef = ref(rtdb, `comments/${sessionId}`);
+  const createdAt = comment.createdAt as unknown as number;
+  await push(commentsRef, {
+    text: comment.text,
+    userId: comment.userId,
+    userName: comment.userName,
+    color: comment.color,
+    position: comment.position,
+    fontSize: comment.fontSize,
+    isPinned: comment.isPinned,
+    isAdmin: comment.isAdmin,
+    createdAt:
+      typeof createdAt === 'number' && Number.isFinite(createdAt)
+        ? createdAt
+        : serverTimestamp(),
+  });
 }
 
 export async function togglePinComment(

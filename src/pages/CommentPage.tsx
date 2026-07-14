@@ -1,7 +1,8 @@
 import { AlertTriangle, MessageCircle, ShieldAlert } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { isDuplicateText } from '../utils/commentModeration';
 import { ActiveQuestion } from '../components/comment/ActiveQuestion';
 import { ActivePoll } from '../components/comment/ActivePoll';
 import { CommentInput } from '../components/comment/CommentInput';
@@ -141,6 +142,8 @@ export function CommentPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId] = useState(getOrCreateUserId);
+  /* ① 直近に自分が送った内容（連投ブロック用・送信直後で未同期でも判定できるよう保持） */
+  const recentSubmitsRef = useRef<{ text: string; at: number }[]>([]);
 
   /* ③ 同意確認 */
   const [showConsent, setShowConsent] = useState(false);
@@ -152,7 +155,10 @@ export function CommentPage() {
   } | null>(null);
 
   const rateLimitSeconds = session?.settings.rateLimitSeconds ?? 3;
-  const { canPost, remaining, recordPost } = useRateLimit(rateLimitSeconds);
+  const { canPost, remaining, recordPost } = useRateLimit(
+    rateLimitSeconds,
+    sessionId ? `csr_rate_${sessionId}_${userId}` : undefined,
+  );
 
   const isBlocked = blockedUserIds.has(userId);
 
@@ -180,6 +186,10 @@ export function CommentPage() {
           isAdmin: false,
         });
         recordPost();
+        recentSubmitsRef.current = [
+          { text: data.text, at: Date.now() },
+          ...recentSubmitsRef.current,
+        ].slice(0, 10);
       } catch {
         toast.error('コメントの投稿に失敗しました');
       } finally {
@@ -198,6 +208,21 @@ export function CommentPage() {
     if (!sessionId || !session) return;
     if (!canPost) {
       toast.error(`${remaining}秒後に投稿できます`);
+      return;
+    }
+
+    /* ① 同じ内容の連投をブロック（直近の送信履歴 + 自分の最近のコメント） */
+    const myRecentTexts = [
+      ...recentSubmitsRef.current
+        .filter((r) => Date.now() - r.at < 3 * 60 * 1000)
+        .map((r) => r.text),
+      ...comments
+        .filter((c) => c.userId === userId)
+        .slice(0, 8)
+        .map((c) => c.text),
+    ];
+    if (isDuplicateText(data.text, myRecentTexts)) {
+      toast.error('同じ内容のコメントは連続で送れません');
       return;
     }
 

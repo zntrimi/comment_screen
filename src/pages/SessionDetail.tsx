@@ -230,7 +230,11 @@ export function SessionDetail() {
           {activeTab === 'comments' ? (
             <>
               <CommentAnalytics comments={comments} />
-              <CommentList sessionId={session.id} comments={comments} />
+              <CommentList
+                sessionId={session.id}
+                comments={comments}
+                ngWords={session.settings.ngWords}
+              />
             </>
           ) : activeTab === 'polls' ? (
             <PollManager sessionId={session.id} />
