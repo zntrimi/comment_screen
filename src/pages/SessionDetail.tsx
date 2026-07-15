@@ -4,6 +4,8 @@ import {
   MessageCircle,
   MessageCircleOff,
   Monitor,
+  Pause,
+  Play,
   QrCode,
   Square,
   Trash2,
@@ -21,7 +23,7 @@ import { SessionSettings } from '../components/dashboard/SessionSettings';
 import { useCommentControl } from '../hooks/useCommentControl';
 import { useComments } from '../hooks/useComments';
 import { useSession } from '../hooks/useSession';
-import { setCommentingEnabled } from '../services/commentControlService';
+import { setCommentingEnabled, setPaused } from '../services/commentControlService';
 import { deleteSession, updateSessionStatus } from '../services/sessionService';
 
 export function SessionDetail() {
@@ -29,7 +31,7 @@ export function SessionDetail() {
   const navigate = useNavigate();
   const { session, loading } = useSession(id);
   const { comments } = useComments(id, { limit: 5000 });
-  const { commentingEnabled } = useCommentControl(id);
+  const { commentingEnabled, paused } = useCommentControl(id);
   const [showQR, setShowQR] = useState(false);
   const [activeTab, setActiveTab] = useState<'comments' | 'polls' | 'questions' | 'settings'>('comments');
 
@@ -87,6 +89,25 @@ export function SessionDetail() {
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
               >
                 <Square className="h-4 w-4" /> 終了
+              </button>
+              {/* ③④質問中でも有効な強制一時停止。オーバーレイは待機ロゴを表示する */}
+              <button
+                onClick={() => setPaused(session.id, !paused)}
+                className={`flex items-center gap-1 rounded-lg border px-3 py-2 text-sm ${
+                  paused
+                    ? 'border-blue-400 bg-blue-600 text-white hover:bg-blue-500'
+                    : 'border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {paused ? (
+                  <>
+                    <Play className="h-4 w-4" /> 再開する
+                  </>
+                ) : (
+                  <>
+                    <Pause className="h-4 w-4" /> 一時停止
+                  </>
+                )}
               </button>
               <button
                 onClick={() => setCommentingEnabled(session.id, !commentingEnabled)}

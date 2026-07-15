@@ -1,9 +1,10 @@
-import { Send, Trash2, X } from 'lucide-react';
+import { FileText, Send, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCommentControl } from '../../hooks/useCommentControl';
 import { useQuestions } from '../../hooks/useQuestions';
 import {
+  activateQuestion,
   closeActiveQuestion,
   createQuestion,
   deleteQuestion,
@@ -21,20 +22,34 @@ export function QuestionManager({ sessionId }: QuestionManagerProps) {
 
   const sorted = [...questions].reverse();
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /* activate=true: 即出題 / false: ⑤下書き保存 */
+  const handleCreate = async (activate: boolean) => {
     const trimmed = text.trim();
     if (!trimmed) return;
 
     setSubmitting(true);
     try {
-      await createQuestion(sessionId, trimmed);
+      await createQuestion(sessionId, trimmed, activate);
       setText('');
-      toast.success('質問を作成しました');
+      toast.success(activate ? '質問を出題しました' : '下書きを保存しました');
     } catch {
-      toast.error('質問の作成に失敗しました');
+      toast.error(activate ? '質問の出題に失敗しました' : '下書きの保存に失敗しました');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  /* ⑤下書きを出題（active 化）する */
+  const handleActivate = async (questionId: string, questionText: string) => {
+    if (activeQuestion) {
+      toast.error('先に出題中の質問を締め切ってください');
+      return;
+    }
+    try {
+      await activateQuestion(sessionId, questionId, questionText);
+      toast.success('質問を出題しました');
+    } catch {
+      toast.error('質問の出題に失敗しました');
     }
   };
 
@@ -83,25 +98,45 @@ export function QuestionManager({ sessionId }: QuestionManagerProps) {
       )}
 
       {/* New question form */}
-      <form onSubmit={handleCreate}>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={activeQuestion ? '質問を締め切ってから次の質問を作成できます' : '新しい質問を入力...'}
-            disabled={!!activeQuestion || submitting}
-            maxLength={200}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
-          />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleCreate(true);
+        }}
+      >
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="新しい質問を入力..."
+          disabled={submitting}
+          maxLength={200}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+        />
+        <div className="mt-2 flex gap-2">
+          {/* ⑤下書き保存（出題中でも準備できる） */}
+          <button
+            type="button"
+            onClick={() => handleCreate(false)}
+            disabled={!text.trim() || submitting}
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            <FileText className="h-4 w-4" /> 下書き保存
+          </button>
           <button
             type="submit"
             disabled={!!activeQuestion || !text.trim() || submitting}
+            title={activeQuestion ? '出題中の質問を締め切ってください' : undefined}
             className="flex items-center gap-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
           >
             <Send className="h-4 w-4" /> 出題
           </button>
         </div>
+        {activeQuestion && (
+          <p className="mt-1.5 text-xs text-gray-400">
+            出題中の質問を締め切ると、下書きを出題できます
+          </p>
+        )}
       </form>
 
       {/* Question history */}
@@ -115,26 +150,41 @@ export function QuestionManager({ sessionId }: QuestionManagerProps) {
           {sorted.map((q) => (
             <div
               key={q.id}
-              className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2"
+              className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={`shrink-0 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
                     q.status === 'active'
                       ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-500'
+                      : q.status === 'draft'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-500'
                   }`}
                 >
-                  {q.status === 'active' ? '受付中' : '締切'}
+                  {q.status === 'active' ? '受付中' : q.status === 'draft' ? '下書き' : '締切'}
                 </span>
                 <span className="text-sm text-gray-700 truncate">{q.text}</span>
               </div>
-              <button
-                onClick={() => handleDelete(q.id)}
-                className="shrink-0 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                {/* ⑤下書きは出題できる */}
+                {q.status === 'draft' && (
+                  <button
+                    onClick={() => handleActivate(q.id, q.text)}
+                    disabled={!!activeQuestion}
+                    title={activeQuestion ? '出題中の質問を締め切ってください' : '出題する'}
+                    className="flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-500 disabled:opacity-40"
+                  >
+                    <Send className="h-3.5 w-3.5" /> 出題
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(q.id)}
+                  className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -32,6 +32,8 @@ export function useComments(sessionId: string | undefined, options?: { limit?: n
   const limit = options?.limit ?? 200;
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComments, setNewComments] = useState<Comment[]>([]);
+  /* ②削除されたコメントID。オーバーレイ側で流れている途中の要素を消すのに使う */
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
   const initialLoadDone = useRef(false);
 
   useEffect(() => {
@@ -78,6 +80,11 @@ export function useComments(sessionId: string | undefined, options?: { limit?: n
     const unsubRemoved = onChildRemoved(commentsRef, (snap) => {
       const id = snap.key!;
       setComments((prev) => prev.filter((c) => c.id !== id));
+      setRemovedIds((prev) => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
     });
 
     return () => {
@@ -90,5 +97,5 @@ export function useComments(sessionId: string | undefined, options?: { limit?: n
 
   const clearNewComments = useCallback(() => setNewComments([]), []);
 
-  return { comments, newComments, clearNewComments };
+  return { comments, newComments, clearNewComments, removedIds };
 }

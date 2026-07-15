@@ -14,6 +14,9 @@ export function SessionSettings({ sessionId, settings }: SessionSettingsProps) {
   const [maxCommentLength, setMaxCommentLength] = useState(settings.maxCommentLength);
   const [rateLimitSeconds, setRateLimitSeconds] = useState(settings.rateLimitSeconds);
   const [scrollSpeedSeconds, setScrollSpeedSeconds] = useState(settings.scrollSpeedSeconds);
+  const [commentDelaySeconds, setCommentDelaySeconds] = useState(
+    settings.commentDelaySeconds ?? 0,
+  );
   const [backgroundColor, setBackgroundColor] = useState(settings.backgroundColor);
   const [defaultCommentColor, setDefaultCommentColor] = useState(settings.defaultCommentColor);
 
@@ -22,6 +25,7 @@ export function SessionSettings({ sessionId, settings }: SessionSettingsProps) {
       maxCommentLength,
       rateLimitSeconds,
       scrollSpeedSeconds,
+      commentDelaySeconds,
       backgroundColor,
       defaultCommentColor,
     });
@@ -63,6 +67,20 @@ export function SessionSettings({ sessionId, settings }: SessionSettingsProps) {
             max={30}
             className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
           />
+        </label>
+        <label className="block">
+          <span className="text-xs text-gray-600">表示までの遅延(秒)</span>
+          <input
+            type="number"
+            value={commentDelaySeconds}
+            onChange={(e) => setCommentDelaySeconds(Number(e.target.value))}
+            min={0}
+            max={30}
+            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          />
+          <span className="mt-0.5 block text-[10px] leading-tight text-gray-400">
+            投稿からオーバーレイに流れ始めるまでの時間。長くするとモデレートの猶予が増えます
+          </span>
         </label>
         <label className="block">
           <span className="text-xs text-gray-600">背景色</span>

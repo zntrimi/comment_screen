@@ -17,6 +17,8 @@ interface CommentRendererProps {
   pinnedComments: Comment[];
   scrollSpeedSeconds: number;
   backgroundColor: string;
+  /** ②削除されたコメントID。流れている途中でも該当要素を除去する */
+  removedIds: Set<string>;
   onNewCommentsProcessed: () => void;
 }
 
@@ -25,6 +27,7 @@ export function CommentRenderer({
   pinnedComments,
   scrollSpeedSeconds,
   backgroundColor,
+  removedIds,
   onNewCommentsProcessed,
 }: CommentRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,6 +97,16 @@ export function CommentRenderer({
 
     onNewCommentsProcessed();
   }, [newComments, scrollSpeedSeconds, onNewCommentsProcessed]);
+
+  // ②削除されたコメントを、流れている途中でも画面から除去する
+  useEffect(() => {
+    if (removedIds.size === 0) return;
+    const drop = (list: ActiveComment[]) =>
+      list.filter((a) => !removedIds.has(a.comment.id));
+    setScrollingComments(drop);
+    setTopComments(drop);
+    setBottomComments(drop);
+  }, [removedIds]);
 
   // animationendイベントでコメントを自動削除（イベント委譲）
   const handleAnimationEnd = useCallback(

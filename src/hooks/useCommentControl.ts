@@ -5,6 +5,7 @@ import type { CommentControl } from '../types';
 
 const DEFAULT_STATE: CommentControl = {
   commentingEnabled: true,
+  paused: false,
   activeQuestion: null,
 };
 
@@ -20,6 +21,7 @@ export function useCommentControl(sessionId: string | undefined) {
         const val = snap.val();
         setControl({
           commentingEnabled: val.commentingEnabled ?? true,
+          paused: val.paused ?? false,
           activeQuestion: val.activeQuestion ?? null,
         });
       } else {

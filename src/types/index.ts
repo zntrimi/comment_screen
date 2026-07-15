@@ -5,6 +5,8 @@ export interface SessionSettings {
   allowAnonymous: boolean;
   rateLimitSeconds: number;
   scrollSpeedSeconds: number;
+  /** ①投稿されてからオーバーレイに流れ始めるまでの遅延（秒）。モデレート猶予に使う */
+  commentDelaySeconds: number;
   ngWords: string[];
   backgroundColor: string;
   defaultCommentColor: string;
@@ -54,7 +56,7 @@ export interface Reaction {
   createdAt: Timestamp;
 }
 
-export type QuestionStatus = 'active' | 'closed';
+export type QuestionStatus = 'draft' | 'active' | 'closed';
 
 export interface Question {
   id: string;
@@ -65,6 +67,8 @@ export interface Question {
 
 export interface CommentControl {
   commentingEnabled: boolean;
+  /** ③④強制一時停止。true の間はコメント投稿を全面停止し、オーバーレイは待機ロゴを表示する（質問中も有効） */
+  paused: boolean;
   activeQuestion: { id: string; text: string; status: QuestionStatus; createdAt: number } | null;
 }
 
@@ -73,6 +77,7 @@ export const DEFAULT_SESSION_SETTINGS: SessionSettings = {
   allowAnonymous: true,
   rateLimitSeconds: 3,
   scrollSpeedSeconds: 8,
+  commentDelaySeconds: 3,
   ngWords: [],
   backgroundColor: 'transparent',
   defaultCommentColor: '#FFFFFF',

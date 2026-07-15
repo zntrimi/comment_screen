@@ -5,6 +5,7 @@ import { CommentRenderer } from '../components/overlay/CommentRenderer';
 import { OverlayPoll } from '../components/overlay/OverlayPoll';
 import { OverlayQuestion } from '../components/overlay/OverlayQuestion';
 import { ReactionBubbles } from '../components/overlay/ReactionBubbles';
+import { useCommentBuffer } from '../hooks/useCommentBuffer';
 import { useComments } from '../hooks/useComments';
 import { useSession } from '../hooks/useSession';
 
@@ -12,15 +13,29 @@ export function Overlay() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [searchParams] = useSearchParams();
   const { session } = useSession(sessionId);
-  const { comments, newComments, clearNewComments } = useComments(sessionId);
+  const { comments, newComments, clearNewComments, removedIds } = useComments(sessionId);
 
   const bgColor = searchParams.get('bg') || 'transparent';
   const speed = Number(
     searchParams.get('speed') || session?.settings.scrollSpeedSeconds || 8,
   );
+  // ①投稿→表示の遅延（クエリ ?delay= で上書き可）
+  const delaySeconds = Number(
+    searchParams.get('delay') ?? session?.settings.commentDelaySeconds ?? 0,
+  );
   const showQr = searchParams.get('qr') === '1';
   const commentUrl = `${window.location.origin}/comment/${sessionId}`;
   const [qrEnlarged, setQrEnlarged] = useState(false);
+
+  // ①② 遅延バッファ。非アクティブ時は流入を破棄する（配信側は一時停止の影響を受けない）
+  const streamEnabled = session?.status === 'active';
+  const { ready, clearReady } = useCommentBuffer(
+    newComments,
+    clearNewComments,
+    removedIds,
+    Number.isFinite(delaySeconds) ? delaySeconds : 0,
+    streamEnabled,
+  );
 
   // 拡大時のQRサイズ（画面の短辺の60%）。オーバーレイは全画面なので一度計算すれば十分。
   const qrLargeSize = useMemo(
@@ -43,22 +58,24 @@ export function Overlay() {
     [comments],
   );
 
-  const filteredNewComments = useMemo(() => {
-    if (session?.status !== 'active') return [];
-    return newComments;
-  }, [newComments, session?.status]);
+  // ②表示直前に削除されたコメントは流さない
+  const visibleReady = useMemo(
+    () => ready.filter((c) => !removedIds.has(c.id)),
+    [ready, removedIds],
+  );
 
   const handleProcessed = useCallback(() => {
-    clearNewComments();
-  }, [clearNewComments]);
+    clearReady();
+  }, [clearReady]);
 
   return (
     <>
       <CommentRenderer
-        newComments={filteredNewComments}
+        newComments={visibleReady}
         pinnedComments={pinnedComments}
         scrollSpeedSeconds={speed}
         backgroundColor={bgColor}
+        removedIds={removedIds}
         onNewCommentsProcessed={handleProcessed}
       />
       {sessionId && <OverlayQuestion sessionId={sessionId} />}

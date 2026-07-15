@@ -1,4 +1,4 @@
-import { Ban, Pause, Pin, PinOff, Play, Trash2 } from 'lucide-react';
+import { Ban, Flag, Pause, Pin, PinOff, Play, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useBlockedUsers } from '../../hooks/useBlockedUsers';
@@ -8,6 +8,7 @@ import {
   restoreComment,
   togglePinComment,
 } from '../../services/commentService';
+import { updateSessionSettings } from '../../services/sessionService';
 import type { Comment } from '../../types';
 import { classifyComments, isFlagged } from '../../utils/commentModeration';
 
@@ -96,6 +97,34 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
         onClick: () => restoreComment(sessionId, c),
       },
     });
+  };
+
+  /* ⑥スパム報告: コメント本文をNGワードに追加し、そのコメントを削除する */
+  const handleReportSpam = async (c: Comment) => {
+    const word = c.text.trim();
+    const added = word.length > 0 && !ngWords.includes(word);
+    if (added) {
+      await updateSessionSettings(sessionId, { ngWords: [...ngWords, word] });
+    }
+    deleteComment(sessionId, c.id);
+    toast.success(
+      added
+        ? 'スパム報告しNGワードに追加しました'
+        : 'スパム報告しました（NGワード登録済み）',
+      {
+        action: {
+          label: '取り消す',
+          onClick: async () => {
+            if (added) {
+              await updateSessionSettings(sessionId, {
+                ngWords: ngWords.filter((w) => w !== word),
+              });
+            }
+            restoreComment(sessionId, c);
+          },
+        },
+      },
+    );
   };
 
   return (
@@ -227,6 +256,13 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
                     ) : (
                       <Pin className="h-4 w-4" />
                     )}
+                  </button>
+                  <button
+                    onClick={() => handleReportSpam(c)}
+                    className="rounded p-2 text-gray-400 hover:bg-orange-50 hover:text-orange-500"
+                    title="スパム報告（NGワードに追加して削除）"
+                  >
+                    <Flag className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(c)}

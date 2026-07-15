@@ -1,4 +1,4 @@
-import { AlertTriangle, MessageCircle, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Heart, MessageCircle, MessageSquare, PauseCircle } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -128,12 +128,108 @@ function ConsentModal({
   );
 }
 
+/* ⑦ ブロック時の切実なメッセージ画面（感情に訴える） */
+function BlockedScreen({ sessionName }: { sessionName: string }) {
+  return (
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-gray-900 p-6 text-center">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-500/15">
+          <Heart className="h-10 w-10 text-red-400" fill="currentColor" />
+        </div>
+
+        <div className="space-y-3">
+          <h1 className="text-2xl font-bold text-white">
+            お願いです。<br />荒らさないでください。
+          </h1>
+          <p className="text-base leading-relaxed text-gray-300">
+            この教室には、<strong className="text-white">真剣に授業を聞きたい人</strong>が
+            たくさんいます。
+          </p>
+          <p className="text-base leading-relaxed text-gray-300">
+            あなたのいたずらは、その人たちの<strong className="text-white">
+            大切な学びの時間</strong>を奪ってしまいます。
+          </p>
+          <p className="text-base leading-relaxed text-gray-300">
+            一人ひとりの「聞きたい」という気持ちを、<br />
+            どうか大切にしてください。
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-gray-700 bg-gray-800/60 px-4 py-3">
+          <p className="text-sm text-gray-400">
+            あなたのコメントは制限されました。<br />
+            この記録は担当の先生に共有されます。
+          </p>
+        </div>
+
+        <p className="text-xs text-gray-600">{sessionName}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ④ 一時停止中はコメントする側の画面全体を待機ロゴ画面に切り替える */
+function PausedScreen({ sessionName }: { sessionName: string }) {
+  return (
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-gray-900 p-6 text-center">
+      {/* やわらかい光 */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(59,130,246,0.35) 0%, rgba(59,130,246,0) 70%)',
+          animation: 'standby-glow 4s ease-in-out infinite',
+        }}
+      />
+
+      <div className="relative flex flex-col items-center gap-6">
+        {/* ロゴマーク */}
+        <div
+          className="flex h-24 w-24 items-center justify-center rounded-[28px] bg-blue-600 shadow-2xl shadow-blue-600/40"
+          style={{ animation: 'standby-breathe 3.2s ease-in-out infinite' }}
+        >
+          <MessageSquare className="h-12 w-12 text-white" strokeWidth={2.4} />
+        </div>
+
+        {/* ワードマーク */}
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Comment Screen
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">コメントスクリーン</p>
+        </div>
+
+        {/* 一時停止バッジ + ドット */}
+        <div className="flex items-center gap-3 rounded-full border border-white/15 bg-white/5 px-5 py-2.5">
+          <PauseCircle className="h-5 w-5 text-blue-300" />
+          <span className="text-base font-bold tracking-widest text-white">一時停止中</span>
+          <span className="flex items-end gap-1">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="h-1.5 w-1.5 rounded-full bg-blue-400"
+                style={{ animation: `standby-dots 1.4s ease-in-out ${i * 0.18}s infinite` }}
+              />
+            ))}
+          </span>
+        </div>
+
+        <p className="max-w-[260px] text-sm leading-relaxed text-gray-500">
+          まもなく再開します。<br />そのままお待ちください。
+        </p>
+      </div>
+
+      <p className="absolute bottom-6 text-xs text-gray-700">{sessionName}</p>
+    </div>
+  );
+}
+
 export function CommentPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const { session, loading: sessionLoading } = useSession(sessionId);
   const { comments } = useComments(sessionId);
   const { blockedUserIds } = useBlockedUsers(sessionId);
-  const { commentingEnabled, activeQuestion } = useCommentControl(sessionId);
+  const { commentingEnabled, paused, activeQuestion } = useCommentControl(sessionId);
   const [nickname, setNickname] = useState(
     () => localStorage.getItem(NICKNAME_KEY) || '',
   );
@@ -281,9 +377,19 @@ export function CommentPage() {
     return <NicknameScreen onComplete={handleNicknameComplete} />;
   }
 
+  /* ⑦ ブロックされている人には切実なメッセージ画面を出す */
+  if (isBlocked) {
+    return <BlockedScreen sessionName={session.name} />;
+  }
+
+  /* ③④一時停止中はコメントする側だけ待機ロゴ画面に切り替える（質問中でも有効・配信側は変わらず） */
+  if (paused) {
+    return <PausedScreen sessionName={session.name} />;
+  }
+
   const isQuestionActive = !!activeQuestion;
   const commentAllowed = isQuestionActive || commentingEnabled;
-  const commentStopped = !commentAllowed && !isBlocked;
+  const commentStopped = !commentAllowed;
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-gray-900">
@@ -299,16 +405,8 @@ export function CommentPage() {
         </h1>
       </header>
 
-      {/* ① ブロックバナー（強化版） */}
-      {isBlocked && (
-        <div className="shrink-0 flex items-center justify-center gap-2 bg-red-900/80 px-4 py-3 text-sm text-red-100">
-          <ShieldAlert className="h-5 w-5 shrink-0 text-red-300" />
-          <span>不適切なコメントが検出されました。コメントが制限されています。学校に報告される場合があります。</span>
-        </div>
-      )}
-
       {/* コメント停止中バナー */}
-      {commentStopped && !isBlocked && (
+      {commentStopped && (
         <div className="shrink-0 flex items-center justify-center gap-2 bg-yellow-900/50 px-4 py-2 text-sm text-yellow-200">
           <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-400" />
           <span>コメントは現在停止中です</span>
@@ -334,14 +432,10 @@ export function CommentPage() {
 
       {/* Reaction Bar + Input - fixed bottom */}
       <div className="shrink-0 border-t border-gray-800 px-4 py-2 space-y-2">
-        <ReactionBar
-          sessionId={sessionId!}
-          userId={userId}
-          disabled={isBlocked}
-        />
+        <ReactionBar sessionId={sessionId!} userId={userId} />
         <CommentInput
           settings={session.settings}
-          canPost={canPost && commentAllowed && !isSubmitting && !isBlocked}
+          canPost={canPost && commentAllowed && !isSubmitting}
           remaining={remaining}
           placeholder={isQuestionActive ? `回答: ${activeQuestion.text}` : undefined}
           onSubmit={handleSubmit}
