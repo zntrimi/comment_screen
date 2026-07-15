@@ -77,14 +77,32 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
     setPausedIds(comments.map((c) => c.id));
   };
 
-  const handleBlock = (c: Comment) => {
+  const handleBlock = async (c: Comment) => {
     blockUser(sessionId, c.userId);
-    toast.success(`${c.userName || '匿名'} をブロックしました`, {
-      action: {
-        label: '取り消す',
-        onClick: () => unblockUser(sessionId, c.userId),
+    /* ブロックしたコメント本文をNGワード（ワードフィルター）にも追加する */
+    const word = c.text.trim();
+    const added = word.length > 0 && !ngWords.includes(word);
+    if (added) {
+      await updateSessionSettings(sessionId, { ngWords: [...ngWords, word] });
+    }
+    toast.success(
+      added
+        ? `${c.userName || '匿名'} をブロックし、NGワードに追加しました`
+        : `${c.userName || '匿名'} をブロックしました`,
+      {
+        action: {
+          label: '取り消す',
+          onClick: async () => {
+            unblockUser(sessionId, c.userId);
+            if (added) {
+              await updateSessionSettings(sessionId, {
+                ngWords: ngWords.filter((w) => w !== word),
+              });
+            }
+          },
+        },
       },
-    });
+    );
   };
 
   const handleUnblock = (c: Comment) => {
