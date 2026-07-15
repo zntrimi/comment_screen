@@ -15,7 +15,7 @@ import { useComments } from '../hooks/useComments';
 import { useRateLimit } from '../hooks/useRateLimit';
 import { useSession } from '../hooks/useSession';
 import { postComment } from '../services/commentService';
-import type { CommentFontSize, CommentPosition } from '../types';
+import type { Comment, CommentFontSize, CommentPosition } from '../types';
 
 const NICKNAME_KEY = 'comment_screen_nickname';
 const USER_ID_KEY = 'comment_screen_user_id';
@@ -129,13 +129,39 @@ function ConsentModal({
 }
 
 /* ⑦ ブロック時の切実なメッセージ画面（感情に訴える） */
-function BlockedScreen({ sessionName }: { sessionName: string }) {
+function BlockedScreen({
+  sessionName,
+  myComments,
+}: {
+  sessionName: string;
+  myComments: Comment[];
+}) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gray-900 p-6 text-center">
       <div className="w-full max-w-sm space-y-6">
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-500/15">
           <Heart className="h-10 w-10 text-red-400" fill="currentColor" />
         </div>
+
+        {/* 自分のコメントを突きつけて内省を促す */}
+        {myComments.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-400">あなたが書いたコメント</p>
+            <div className="space-y-2">
+              {myComments.map((c) => (
+                <p
+                  key={c.id}
+                  className="rounded-xl bg-gray-800 px-4 py-3 text-base text-gray-100 break-words"
+                >
+                  「{c.text}」
+                </p>
+              ))}
+            </div>
+            <p className="text-lg font-bold text-white">
+              これ、面白いですか？<br />なにか役に立っていますか？
+            </p>
+          </div>
+        )}
 
         <div className="space-y-3">
           <h1 className="text-2xl font-bold text-white">
@@ -377,9 +403,12 @@ export function CommentPage() {
     return <NicknameScreen onComplete={handleNicknameComplete} />;
   }
 
-  /* ⑦ ブロックされている人には切実なメッセージ画面を出す */
+  /* ⑦ ブロックされている人には自分のコメントを見せて切実なメッセージを出す */
   if (isBlocked) {
-    return <BlockedScreen sessionName={session.name} />;
+    const myComments = comments
+      .filter((c) => c.userId === userId)
+      .slice(0, 3);
+    return <BlockedScreen sessionName={session.name} myComments={myComments} />;
   }
 
   /* ③④一時停止中はコメントする側だけ待機ロゴ画面に切り替える（質問中でも有効・配信側は変わらず） */
