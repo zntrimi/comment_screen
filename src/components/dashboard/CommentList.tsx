@@ -22,7 +22,7 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
   const { blockedUserIds } = useBlockedUsers(sessionId);
   /* 一時停止中のスナップショット（表示順の id 配列）。null = ライブ */
   const [pausedIds, setPausedIds] = useState<string[] | null>(null);
-  const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'flagged' | 'blocked'>('all');
 
   const flagsMap = useMemo(
     () => classifyComments(comments, ngWords),
@@ -41,6 +41,11 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
     [comments, flagsMap],
   );
 
+  const blockedCount = useMemo(
+    () => comments.filter((c) => blockedUserIds.has(c.userId)).length,
+    [comments, blockedUserIds],
+  );
+
   /* 表示リスト: 一時停止中はスナップショットの順を維持（削除は反映・新着は保留） */
   const baseList = useMemo(() => {
     if (pausedIds) {
@@ -57,9 +62,12 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
     return comments.filter((c) => !snap.has(c.id)).length;
   }, [pausedIds, comments]);
 
-  const displayed = showFlaggedOnly
-    ? baseList.filter((c) => isFlagged(flagsMap.get(c.id)))
-    : baseList;
+  const displayed =
+    filter === 'flagged'
+      ? baseList.filter((c) => isFlagged(flagsMap.get(c.id)))
+      : filter === 'blocked'
+        ? baseList.filter((c) => blockedUserIds.has(c.userId))
+        : baseList;
 
   const handleTogglePause = () => {
     setPausedIds(isPaused ? null : comments.map((c) => c.id));
@@ -133,24 +141,34 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
       <div className="mb-2 flex items-center gap-2">
         <div className="flex overflow-hidden rounded-lg border border-gray-200 text-xs">
           <button
-            onClick={() => setShowFlaggedOnly(false)}
+            onClick={() => setFilter('all')}
             className={`px-3 py-1.5 font-medium ${
-              showFlaggedOnly
-                ? 'bg-white text-gray-600 hover:bg-gray-50'
-                : 'bg-blue-600 text-white'
+              filter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
             すべて {comments.length}
           </button>
           <button
-            onClick={() => setShowFlaggedOnly(true)}
-            className={`px-3 py-1.5 font-medium ${
-              showFlaggedOnly
+            onClick={() => setFilter('flagged')}
+            className={`border-l border-gray-200 px-3 py-1.5 font-medium ${
+              filter === 'flagged'
                 ? 'bg-amber-500 text-white'
                 : 'bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
             要確認 {flaggedCount}
+          </button>
+          <button
+            onClick={() => setFilter('blocked')}
+            className={`border-l border-gray-200 px-3 py-1.5 font-medium ${
+              filter === 'blocked'
+                ? 'bg-red-500 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            ブロック {blockedCount}
           </button>
         </div>
 
@@ -185,9 +203,11 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
 
       {displayed.length === 0 ? (
         <p className="py-8 text-center text-sm text-gray-400">
-          {showFlaggedOnly
+          {filter === 'flagged'
             ? '要確認のコメントはありません'
-            : 'まだコメントはありません'}
+            : filter === 'blocked'
+              ? 'ブロックしたコメントはありません'
+              : 'まだコメントはありません'}
         </p>
       ) : (
         <div className="max-h-[600px] space-y-1 overflow-y-auto">

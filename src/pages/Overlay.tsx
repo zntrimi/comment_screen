@@ -5,6 +5,7 @@ import { CommentRenderer } from '../components/overlay/CommentRenderer';
 import { OverlayPoll } from '../components/overlay/OverlayPoll';
 import { OverlayQuestion } from '../components/overlay/OverlayQuestion';
 import { ReactionBubbles } from '../components/overlay/ReactionBubbles';
+import { useBlockedUsers } from '../hooks/useBlockedUsers';
 import { useCommentBuffer } from '../hooks/useCommentBuffer';
 import { useComments } from '../hooks/useComments';
 import { useSession } from '../hooks/useSession';
@@ -14,6 +15,7 @@ export function Overlay() {
   const [searchParams] = useSearchParams();
   const { session } = useSession(sessionId);
   const { comments, newComments, clearNewComments, removedIds } = useComments(sessionId);
+  const { blockedUserIds } = useBlockedUsers(sessionId);
 
   const bgColor = searchParams.get('bg') || 'transparent';
   const speed = Number(
@@ -53,15 +55,19 @@ export function Overlay() {
     };
   }, []);
 
+  // ブロックした人のコメントは配信側でも表示しない
   const pinnedComments = useMemo(
-    () => comments.filter((c) => c.isPinned),
-    [comments],
+    () => comments.filter((c) => c.isPinned && !blockedUserIds.has(c.userId)),
+    [comments, blockedUserIds],
   );
 
-  // ②表示直前に削除されたコメントは流さない
+  // ②削除・ブロックされたコメントは表示直前に流さない
   const visibleReady = useMemo(
-    () => ready.filter((c) => !removedIds.has(c.id)),
-    [ready, removedIds],
+    () =>
+      ready.filter(
+        (c) => !removedIds.has(c.id) && !blockedUserIds.has(c.userId),
+      ),
+    [ready, removedIds, blockedUserIds],
   );
 
   const handleProcessed = useCallback(() => {
@@ -76,6 +82,7 @@ export function Overlay() {
         scrollSpeedSeconds={speed}
         backgroundColor={bgColor}
         removedIds={removedIds}
+        blockedUserIds={blockedUserIds}
         onNewCommentsProcessed={handleProcessed}
       />
       {sessionId && <OverlayQuestion sessionId={sessionId} />}

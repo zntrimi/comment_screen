@@ -420,6 +420,9 @@ export function CommentPage() {
   const commentAllowed = isQuestionActive || commentingEnabled;
   const commentStopped = !commentAllowed;
 
+  /* ブロックした人のコメントは参加者の一覧にも出さない */
+  const visibleComments = comments.filter((c) => !blockedUserIds.has(c.userId));
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-gray-900">
       {/* ③ 同意確認モーダル */}
@@ -456,7 +459,7 @@ export function CommentPage() {
 
       {/* Comments - scrollable */}
       <div className="min-h-0 flex-1 overflow-hidden px-4 py-2">
-        <RecentComments comments={comments} />
+        <RecentComments comments={visibleComments} />
       </div>
 
       {/* Reaction Bar + Input - fixed bottom */}

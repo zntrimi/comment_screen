@@ -19,6 +19,8 @@ interface CommentRendererProps {
   backgroundColor: string;
   /** ②削除されたコメントID。流れている途中でも該当要素を除去する */
   removedIds: Set<string>;
+  /** ブロックされたユーザーID。流れている途中でも該当ユーザーのコメントを除去する */
+  blockedUserIds: Set<string>;
   onNewCommentsProcessed: () => void;
 }
 
@@ -28,6 +30,7 @@ export function CommentRenderer({
   scrollSpeedSeconds,
   backgroundColor,
   removedIds,
+  blockedUserIds,
   onNewCommentsProcessed,
 }: CommentRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -107,6 +110,16 @@ export function CommentRenderer({
     setTopComments(drop);
     setBottomComments(drop);
   }, [removedIds]);
+
+  // ブロックされたユーザーのコメントを、流れている途中でも画面から除去する
+  useEffect(() => {
+    if (blockedUserIds.size === 0) return;
+    const drop = (list: ActiveComment[]) =>
+      list.filter((a) => !blockedUserIds.has(a.comment.userId));
+    setScrollingComments(drop);
+    setTopComments(drop);
+    setBottomComments(drop);
+  }, [blockedUserIds]);
 
   // animationendイベントでコメントを自動削除（イベント委譲）
   const handleAnimationEnd = useCallback(
