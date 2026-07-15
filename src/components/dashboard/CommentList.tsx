@@ -1,4 +1,4 @@
-import { Ban, Flag, Pause, Pin, PinOff, Play, Trash2 } from 'lucide-react';
+import { Ban, Pause, Pin, PinOff, Play, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useBlockedUsers } from '../../hooks/useBlockedUsers';
@@ -77,32 +77,29 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
     setPausedIds(comments.map((c) => c.id));
   };
 
+  /* 一発アウト: ブロック＋本文をNGワード追加＋コメント削除をまとめて実行 */
   const handleBlock = async (c: Comment) => {
     blockUser(sessionId, c.userId);
-    /* ブロックしたコメント本文をNGワード（ワードフィルター）にも追加する */
     const word = c.text.trim();
     const added = word.length > 0 && !ngWords.includes(word);
     if (added) {
       await updateSessionSettings(sessionId, { ngWords: [...ngWords, word] });
     }
-    toast.success(
-      added
-        ? `${c.userName || '匿名'} をブロックし、NGワードに追加しました`
-        : `${c.userName || '匿名'} をブロックしました`,
-      {
-        action: {
-          label: '取り消す',
-          onClick: async () => {
-            unblockUser(sessionId, c.userId);
-            if (added) {
-              await updateSessionSettings(sessionId, {
-                ngWords: ngWords.filter((w) => w !== word),
-              });
-            }
-          },
+    deleteComment(sessionId, c.id);
+    toast.success(`${c.userName || '匿名'} を一発アウトにしました（ブロック・NG登録・削除）`, {
+      action: {
+        label: '取り消す',
+        onClick: async () => {
+          unblockUser(sessionId, c.userId);
+          if (added) {
+            await updateSessionSettings(sessionId, {
+              ngWords: ngWords.filter((w) => w !== word),
+            });
+          }
+          restoreComment(sessionId, c);
         },
       },
-    );
+    });
   };
 
   const handleUnblock = (c: Comment) => {
@@ -123,34 +120,6 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
         onClick: () => restoreComment(sessionId, c),
       },
     });
-  };
-
-  /* ⑥スパム報告: コメント本文をNGワードに追加し、そのコメントを削除する */
-  const handleReportSpam = async (c: Comment) => {
-    const word = c.text.trim();
-    const added = word.length > 0 && !ngWords.includes(word);
-    if (added) {
-      await updateSessionSettings(sessionId, { ngWords: [...ngWords, word] });
-    }
-    deleteComment(sessionId, c.id);
-    toast.success(
-      added
-        ? 'スパム報告しNGワードに追加しました'
-        : 'スパム報告しました（NGワード登録済み）',
-      {
-        action: {
-          label: '取り消す',
-          onClick: async () => {
-            if (added) {
-              await updateSessionSettings(sessionId, {
-                ngWords: ngWords.filter((w) => w !== word),
-              });
-            }
-            restoreComment(sessionId, c);
-          },
-        },
-      },
-    );
   };
 
   return (
@@ -280,7 +249,7 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
                         ? 'text-red-500 hover:bg-red-100'
                         : 'text-gray-400 hover:bg-red-50 hover:text-red-500'
                     }`}
-                    title={isBlocked ? 'ブロック解除' : 'ブロック'}
+                    title={isBlocked ? 'ブロック解除' : '一発アウト（ブロック・NG登録・削除）'}
                   >
                     <Ban className="h-4 w-4" />
                   </button>
@@ -294,13 +263,6 @@ export function CommentList({ sessionId, comments, ngWords }: CommentListProps) 
                     ) : (
                       <Pin className="h-4 w-4" />
                     )}
-                  </button>
-                  <button
-                    onClick={() => handleReportSpam(c)}
-                    className="rounded p-2 text-gray-400 hover:bg-orange-50 hover:text-orange-500"
-                    title="スパム報告（NGワードに追加して削除）"
-                  >
-                    <Flag className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(c)}
