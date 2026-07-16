@@ -15,7 +15,7 @@ import { useComments } from '../hooks/useComments';
 import { useRateLimit } from '../hooks/useRateLimit';
 import { useSession } from '../hooks/useSession';
 import { postComment } from '../services/commentService';
-import type { Comment, CommentFontSize, CommentPosition } from '../types';
+import type { CommentFontSize, CommentPosition } from '../types';
 
 const NICKNAME_KEY = 'comment_screen_nickname';
 const USER_ID_KEY = 'comment_screen_user_id';
@@ -131,10 +131,10 @@ function ConsentModal({
 /* ⑦ ブロック時の切実なメッセージ画面（感情に訴える） */
 function BlockedScreen({
   sessionName,
-  myComments,
+  myTexts,
 }: {
   sessionName: string;
-  myComments: Comment[];
+  myTexts: string[];
 }) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gray-900 p-6 text-center">
@@ -144,16 +144,16 @@ function BlockedScreen({
         </div>
 
         {/* 自分のコメントを突きつけて内省を促す */}
-        {myComments.length > 0 && (
+        {myTexts.length > 0 && (
           <div className="space-y-3">
             <p className="text-sm text-gray-400">あなたが書いたコメント</p>
             <div className="space-y-2">
-              {myComments.map((c) => (
+              {myTexts.map((text, i) => (
                 <p
-                  key={c.id}
+                  key={i}
                   className="rounded-xl bg-gray-800 px-4 py-3 text-base text-gray-100 break-words"
                 >
-                  「{c.text}」
+                  「{text}」
                 </p>
               ))}
             </div>
@@ -403,12 +403,23 @@ export function CommentPage() {
     return <NicknameScreen onComplete={handleNicknameComplete} />;
   }
 
-  /* ⑦ ブロックされている人には自分のコメントを見せて切実なメッセージを出す */
+  /* ⑦ ブロックされている人には自分のコメントを見せて切実なメッセージを出す。
+     一発アウトで削除されても本人の端末に残る投稿履歴を優先的に使う */
   if (isBlocked) {
-    const myComments = comments
+    const localTexts = recentSubmitsRef.current.map((r) => r.text);
+    const liveTexts = comments
       .filter((c) => c.userId === userId)
-      .slice(0, 3);
-    return <BlockedScreen sessionName={session.name} myComments={myComments} />;
+      .map((c) => c.text);
+    const seen = new Set<string>();
+    const myTexts: string[] = [];
+    for (const t of [...localTexts, ...liveTexts]) {
+      const trimmed = t.trim();
+      if (!trimmed || seen.has(trimmed)) continue;
+      seen.add(trimmed);
+      myTexts.push(trimmed);
+      if (myTexts.length >= 3) break;
+    }
+    return <BlockedScreen sessionName={session.name} myTexts={myTexts} />;
   }
 
   /* ③④一時停止中はコメントする側だけ待機ロゴ画面に切り替える（質問中でも有効・配信側は変わらず） */
